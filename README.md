@@ -1,4 +1,5 @@
 # Reachify: Automate Your Client Outreach
+[![wakatime](https://wakatime.com/badge/user/04c60a11-7fcd-4d1d-accf-a4bb74ceedec/project/018e9cf7-12f0-451b-b48e-3a1f96f2f527.svg)](https://wakatime.com/badge/user/04c60a11-7fcd-4d1d-accf-a4bb74ceedec/project/018e9cf7-12f0-451b-b48e-3a1f96f2f527)
 
 **Reachify** is revolutionizing how Social Media Marketing Agencies (SMMA) and Software as a Service (SAAS) agencies manage their client outreach. By harnessing the power of automation, **Reachify** streamlines the process of connecting with potential clients, nurturing leads, and converting those leads into loyal customers, all from one intuitive platform.
 
@@ -49,7 +50,3 @@ Stay up to date with the latest **Reachify** news:
 ## About Us 🏢
 
 **Reachify** is built by a team of passionate developers and marketers dedicated to simplifying client outreach for SMMA and SAAS agencies. Learn more about us [here](http://www.reachify.io/about).
-
----
-
-This template is just a starting point. Feel free to customize it to better suit your project's needs and to reflect your brand's voice and tone. Remember, a README is often the first thing users or potential contributors see, so make it count!
