@@ -1,5 +1,7 @@
 import pandas as pd
 import requests
+from rich import print
+from rich.panel import Panel
 
 # Load the CSV file
 file_path = 'Examplar Prospects List.csv'
@@ -12,17 +14,19 @@ websites = df.iloc[:, 5]  # Adjust the column index as necessary
 status_list = []
 
 for url in websites:
-    print(f"Checking {url}...")
+    print(f"Checking {url}...")  # Print the URL being checked
     try:
         response = requests.get(url, timeout=10)
         if 200 <= response.status_code < 300:
             status = 'Online'
+            print(Panel.fit(f"URL: {url}\nStatus: {status}", border_style="bold green"))
         else:
             status = 'Offline or Error'
-    except requests.RequestException as e:
-        status = f'Error - {e}'
+            print(Panel.fit(f"URL: {url}\nStatus: {status}", border_style="bold red"))
+    except requests.RequestException:
+        status = 'Offline or Error'
+        print(Panel.fit(f"URL: {url}\nStatus: {status}", border_style="bold red"))
     
-    print(f"Status: {status}")
     status_list.append(status)
 
 # Add the status back to the dataframe and save to a new CSV file
