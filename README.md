@@ -50,7 +50,3 @@ Stay up to date with the latest **Reachify** news:
 ## About Us 🏢
 
 **Reachify** is built by a team of passionate developers and marketers dedicated to simplifying client outreach for SMMA and SAAS agencies. Learn more about us [here](http://www.reachify.io/about).
-
----
-
-This template is just a starting point. Feel free to customize it to better suit your project's needs and to reflect your brand's voice and tone. Remember, a README is often the first thing users or potential contributors see, so make it count!
