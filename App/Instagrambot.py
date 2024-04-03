@@ -42,17 +42,16 @@ for url in websites:
                     if username and username not in all_usernames:
                         all_usernames.append(username)
         else:
-            print(Panel.fit(f"Could not retrieve {url}", border_style="bold red", box = box.SQUARE))
+            print(f"Could not retrieve {url}")
     except requests.RequestException as e:
-        print(Panel.fit(f"Error: {e}", box = box.SQUARE, border_style="bold red"))
+        print(f"Error: {e}")
 
-# Selecting a random sample of 3 usernames, if there are at least 3 usernames
-if len(all_usernames) > 1:
-    selected_usernames = random.sample(all_usernames, 1)
+# Selecting one random username from the list
+if all_usernames:
+    selected_username = random.choice(all_usernames)
+
+    # Sending a message to the selected username
+    bot.send_message("Hi, How are you", [selected_username])
+    print(f"Message sent to {selected_username}")
 else:
-    selected_usernames = all_usernames
-
-# Sending messages to the selected usernames
-for username in selected_usernames:
-    bot.send_message("Hi, How are you", [username])
-    print(Panel.fit(f"Message sent to {username}", border_style="bold green", box = box.SQUARE))
+    print("No Instagram usernames found to message.")
