@@ -10,7 +10,7 @@ from email.mime.multipart import MIMEMultipart
 smtp_server = 'smtp.gmail.com'  # Your SMTP server
 smtp_port = 443  # Your SMTP server's port
 email_address = 'raoabdulhadi952@gmail.com'  # Your email
-email_password = 'hadi@notion2'  # Your email password or app-specific password
+email_password = '--'  # Your email password or app-specific password
 
 # Email content
 subject = 'My MILLION DOLLAR offer to you'
