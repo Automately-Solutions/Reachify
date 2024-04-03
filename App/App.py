@@ -47,13 +47,13 @@ for url in websites:
                 content_lines.append("Social Media Links:")
                 content_lines.extend(social_media_links)
             else:
-                content_lines.append("No social media links found.")
+                content_lines.append("[b red]No social media links found.[/]")
                 
             if emails:
                 content_lines.append("Email Addresses:")
                 content_lines.extend(emails)
             else:
-                content_lines.append("No email addresses found.")
+                content_lines.append("[b red]No email addresses found.[/]")
 
             # Join the content lines and print the panel
             panel_content = "\n".join(content_lines)
