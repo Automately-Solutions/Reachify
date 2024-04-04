@@ -1,18 +1,47 @@
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import re
 from instagrapi import Client
-import random
 
-# Instagrapi Client initialization with your Instagram account credentials
+# Load the CSV file
+file_path = 'Examplar Prospects List.csv'
+df = pd.read_csv(file_path)
+
+# Assuming the website links are in column 'F'
+websites = df.iloc[:, 5]  # Adjust the column index as necessary
+
+# Instagrapi client setup
 cl = Client()
-cl.login("wordsmith.agency", "wordsmithscriptsforyou")
+cl.login(username="username", password="password")
 
-# Assuming you have a list of Instagram usernames previously collected
-instagram_usernames = ['m3l4t0n', 'ricardozilla', 'thevituousone']  # Replace these with actual usernames
+def extract_instagram_username(instagram_url):
+    # This function assumes that the Instagram URL is in the form of https://www.instagram.com/username/
+    # It extracts 'username' from the URL
+    match = re.search(r"instagram.com/([^/?#&]+)", instagram_url)
+    if match:
+        return match.group(1)
+    else:
+        return None
 
-# Selecting one random username from the list
-if instagram_usernames:
-    selected_username = random.choice(instagram_usernames)
-    user_id = cl.user_id_from_username(selected_username)
-    cl.direct_send("Hi, How are you", [user_id])
-    print(f"Message sent to {selected_username}")
-else:
-    print("No Instagram usernames available to message.")
+for url in websites:
+    print(f"Checking {url}...")
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            links = soup.find_all('a', href=True)
+            for link in links:
+                href = link['href']
+                if "instagram.com" in href:
+                    username = extract_instagram_username(href)
+                    if username:
+                        # Get user ID from username
+                        user_id = cl.user_id_from_username(username)
+                        # Send message
+                        cl.direct_send("Hi, How are you", [user_id])
+                        print(f"Message sent to {username}")
+        else:
+            print(f"Could not retrieve {url}")
+    except requests.RequestException as e:
+        print(f"Error: {e}")
