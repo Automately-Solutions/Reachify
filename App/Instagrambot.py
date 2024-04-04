@@ -1,3 +1,8 @@
+from rich import box
+from rich import text
+from rich import print
+from rich.panel import Panel
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -40,8 +45,8 @@ for url in websites:
                         user_id = cl.user_id_from_username(username)
                         # Send message
                         cl.direct_send("Hi, How are you", [user_id])
-                        print(f"Message sent to {username}")
+                        print(Panel.fit(f"Message sent to {username}", border_style="bold green", box = box.SQUARE))
         else:
-            print(f"Could not retrieve {url}")
+            print(Panel.fit(f"Could not retrieve {url}", border_style="bold red", box = box.SQUARE))
     except requests.RequestException as e:
-        print(f"Error: {e}")
+        print(Panel.fit(f"Error: {e}", border_style = "bold red"))
