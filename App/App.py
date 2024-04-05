@@ -1,112 +1,86 @@
-from rich import text
-from rich import box
-from rich import print
+from rich import print, box
 from rich.panel import Panel
-from rich.traceback import install
-install(show_locals=True)
-
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import re
 from instagrapi import Client
-from instagrapi.exceptions import UserNotFound, LoginRequired
+from instagrapi.exceptions import UserNotFound
 import logging
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
 
-# Setup logging
 logger = logging.getLogger()
 
-# Load the CSV file
-file_path = 'Examplar Prospects List.csv'
-df = pd.read_csv(file_path)
-
-# Assuming the website links are in column 'F'
-websites = df.iloc[:, 5]  # Adjust the column index as necessary
-
-# Instagrapi client setup
-cl = Client()
-
-# Replace these with your actual username and password
-USERNAME = "instagram_username"
-PASSWORD = "instagram_password"
-
-def login_user():
+def login_user(username, password):
     """
-    Login to Instagram with username and password.
+    Login to Instagram with the provided username and password.
     """
-    try:
-        if cl.login(USERNAME, PASSWORD):
-            logger.info("Logged in successfully.")
-    except Exception as e:
-        logger.error(f"Login failed: {e}")
+    cl = Client()
+    if cl.login(username, password):
+        return cl
+    else:
         raise Exception("Login failed")
 
-# Call login_user to log in
-login_user()
-
-def scrape_facebook_and_gmail(websites):
+def scrape_social_media_links(website_url):
     facebook_links = []
     gmail_addresses = []
+    try:
+        response = requests.get(website_url, timeout=10)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            for link in soup.find_all('a', href=True):
+                if "facebook.com" in link['href']:
+                    facebook_links.append(link['href'])
+            for email in re.findall(r"[a-zA-Z0-9_.+-]+@gmail.com", soup.text):
+                gmail_addresses.append(email)
+    except requests.RequestException as e:
+        print(f"Error fetching {website_url}: {e}")
+    return facebook_links, gmail_addresses
 
-    for url in websites:
-        try:
-            response = requests.get(url, timeout=10)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                links = soup.find_all('a', href=True)
-                for link in links:
-                    href = link['href']
-                    if "facebook.com" in href:
-                        facebook_links.append(href)
-                text = soup.get_text()
-                gmail_addresses.extend(re.findall(r"[a-zA-Z0-9_.+-]+@gmail.com", text))
-        except requests.RequestException as e:
-            logger.error(f"Error fetching {url}: {e}")
-    
-    # Print all Facebook links
-    print(Panel.fit("\n".join(facebook_links), title="Facebook Links", border_style="bold blue", box=box.SQUARE))
-    # Print all Gmail addresses
-    print(Panel.fit("\n".join(gmail_addresses), title="Gmail Addresses", border_style="bold magenta", box=box.SQUARE))
-
-def send_instagram_message(websites):
+def send_instagram_messages(websites, cl):
     messages_sent = 0
-    for url in websites:
-        found_instagram = False
-        try:
-            response = requests.get(url, timeout=10)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                links = soup.find_all('a', href=True)
-                for link in links:
-                    href = link['href']
-                    if "instagram.com" in href:
-                        username = extract_instagram_username(href)
-                        if username:
-                            found_instagram = True
-                            try:
-                                user_id = cl.user_id_from_username(username)
-                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. At Pixelevate, we offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
-                                cl.direct_send(message, [user_id])
-                                print(Panel.fit(f"Message sent to {username}", border_style="bold green", box=box.SQUARE))
-                                messages_sent += 1
-                            except UserNotFound:
-                                print(Panel.fit(f"Instagram user {username} not found. Skipping...", border_style="bold yellow", box=box.SQUARE))
+    for i, url in enumerate(websites, start=2):  # start=2 assumes headers in row 1
+        facebook_links, gmail_addresses = scrape_social_media_links(url)
+        print(Panel(f"Facebook Links: {facebook_links}", title="Facebook Links", border_style="bold blue", box=box.SQUARE))
+        print(Panel(f"Gmail Addresses: {gmail_addresses}", title="Gmail Addresses", border_style="bold yellow", box=box.SQUARE))
+        
+        # Now, onto Instagram messaging
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            for link in soup.find_all('a', href=True):
+                if "instagram.com" in link['href']:
+                    username = extract_instagram_username(link['href'])
+                    if username:
+                        try:
+                            user_id = cl.user_id_from_username(username)
+                            message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. At WordSmith, we offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."                            
+                            cl.direct_send(message, [user_id])
+                            ws['A' + str(i)].fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")  # A is the column with websites, adjust accordingly
+                            print(Panel.fit(f"Message sent to {username}", border_style="bold green", box=box.SQUARE))
+                            messages_sent += 1
                             break
-            else:
-                print(Panel.fit(f"Could not retrieve {url}", border_style="bold red", box=box.SQUARE))
-        except requests.RequestException as e:
-            print(Panel.fit(f"Error: {e}", border_style="bold red", box=box.SQUARE))
-
-    # Print the count of successfully sent messages
+                        except UserNotFound:
+                            print(Panel.fit(f"Instagram user {username} not found.", title="Error", title_slign="left", border_style="bold red", box=box.SQUARE))
+        wb.save(file_path)
     print(Panel.fit(f"Successfully sent messages: {messages_sent}", border_style="bold green", box=box.SQUARE))
 
 def extract_instagram_username(instagram_url):
     match = re.search(r"instagram.com/([^/?#&]+)", instagram_url)
-    if match:
-        return match.group(1)
-    else:
-        return None
+    return match.group(1) if match else None
 
-# Implementation 
-send_instagram_message(websites)
-scrape_facebook_and_gmail(websites)
+# Load the .xlsx file
+file_path = 'Client Spreadsheet.xlsx'
+wb = load_workbook(filename=file_path)
+ws = wb.active
+
+# Assuming the website links are in column 'F'
+websites = [cell.value for cell in ws['F'][1:]]  # Skip header
+
+# Instagram client setup
+username = "username"
+password = "password"
+cl = login_user(username, password)
+
+send_instagram_messages(websites, cl)
