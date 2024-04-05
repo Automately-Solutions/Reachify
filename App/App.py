@@ -1,6 +1,10 @@
+from rich import text
+from rich import box
 from rich import print
 from rich.panel import Panel
-from rich import box
+from rich.traceback import install
+install(show_locals=True)
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -9,58 +13,41 @@ from instagrapi import Client
 from instagrapi.exceptions import UserNotFound, LoginRequired
 import logging
 
-# Setup logger
+# Setup logging
 logger = logging.getLogger()
 
-# Initialize the Instagrapi client
+# Load the CSV file
+file_path = 'Examplar Prospects List.csv'
+df = pd.read_csv(file_path)
+
+# Assuming the website links are in column 'F'
+websites = df.iloc[:, 5]  # Adjust the column index as necessary
+
+# Instagrapi client setup
 cl = Client()
 
-# Define global variables for login credentials
-USERNAME = "your_username"  # Replace with your Instagram username
-PASSWORD = "your_password"  # Replace with your Instagram password
+# Replace these with your actual username and password
+USERNAME = "instagram_username"
+PASSWORD = "instagram_password"
 
 def login_user():
     """
-    Attempts to login to Instagram using either the provided session information
-    or the provided username and password.
+    Login to Instagram with username and password.
     """
-    session = cl.load_settings("session.json")
+    try:
+        if cl.login(USERNAME, PASSWORD):
+            logger.info("Logged in successfully.")
+    except Exception as e:
+        logger.error(f"Login failed: {e}")
+        raise Exception("Login failed")
 
-    login_via_session = False
-    login_via_pw = False
+# Call login_user to log in
+login_user()
 
-    if session:
-        try:
-            cl.set_settings(session)
-            cl.login(USERNAME, PASSWORD)
-            try:
-                cl.get_timeline_feed()
-            except LoginRequired:
-                logger.info("Session is invalid, need to login via username and password")
-                old_session = cl.get_settings()
-                cl.set_settings({})
-                cl.set_uuids(old_session["uuids"])
-                cl.login(USERNAME, PASSWORD)
-            login_via_session = True
-        except Exception as e:
-            logger.info(f"Couldn't login user using session information: {e}")
+def scrape_facebook_and_gmail(websites):
+    facebook_links = []
+    gmail_addresses = []
 
-    if not login_via_session:
-        try:
-            logger.info(f"Attempting to login via username and password. Username: {USERNAME}")
-            if cl.login(USERNAME, PASSWORD):
-                login_via_pw = True
-        except Exception as e:
-            logger.info(f"Couldn't login user using username and password: {e}")
-
-    if not login_via_pw and not login_via_session:
-        raise Exception("Couldn't login user with either password or session")
-
-def scrape_links(websites, pattern):
-    """
-    Generic function to scrape links matching a given pattern from a list of websites.
-    """
-    matching_links = []
     for url in websites:
         try:
             response = requests.get(url, timeout=10)
@@ -68,16 +55,20 @@ def scrape_links(websites, pattern):
                 soup = BeautifulSoup(response.text, 'html.parser')
                 links = soup.find_all('a', href=True)
                 for link in links:
-                    if re.search(pattern, link['href']):
-                        matching_links.append(link['href'])
-        except requests.RequestException:
-            pass  # You might want to log errors or handle them differently
-    return list(set(matching_links))  # Return unique links
+                    href = link['href']
+                    if "facebook.com" in href:
+                        facebook_links.append(href)
+                text = soup.get_text()
+                gmail_addresses.extend(re.findall(r"[a-zA-Z0-9_.+-]+@gmail.com", text))
+        except requests.RequestException as e:
+            logger.error(f"Error fetching {url}: {e}")
+    
+    # Print all Facebook links
+    print(Panel.fit("\n".join(facebook_links), title="Facebook Links", border_style="bold blue", box=box.SQUARE))
+    # Print all Gmail addresses
+    print(Panel.fit("\n".join(gmail_addresses), title="Gmail Addresses", border_style="bold magenta", box=box.SQUARE))
 
-def send_instagram_messages(websites):
-    """
-    Function to send Instagram messages to users found on the websites.
-    """
+def send_instagram_message(websites):
     messages_sent = 0
     for url in websites:
         found_instagram = False
@@ -89,10 +80,9 @@ def send_instagram_messages(websites):
                 for link in links:
                     href = link['href']
                     if "instagram.com" in href:
-                        username = re.search(r"instagram.com/([^/?#&]+)", href)
+                        username = extract_instagram_username(href)
                         if username:
                             found_instagram = True
-                            username = username.group(1)
                             try:
                                 user_id = cl.user_id_from_username(username)
                                 message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. At Pixelevate, we offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
@@ -100,27 +90,23 @@ def send_instagram_messages(websites):
                                 print(Panel.fit(f"Message sent to {username}", border_style="bold green", box=box.SQUARE))
                                 messages_sent += 1
                             except UserNotFound:
-                                print(Panel.fit(f"Instagram user {username} not found.", border_style="bold yellow", box=box.SQUARE))
+                                print(Panel.fit(f"Instagram user {username} not found. Skipping...", border_style="bold yellow", box=box.SQUARE))
                             break
-        except requests.RequestException:
-            pass  # Handle errors as needed
+            else:
+                print(Panel.fit(f"Could not retrieve {url}", border_style="bold red", box=box.SQUARE))
+        except requests.RequestException as e:
+            print(Panel.fit(f"Error: {e}", border_style="bold red", box=box.SQUARE))
+
+    # Print the count of successfully sent messages
     print(Panel.fit(f"Successfully sent messages: {messages_sent}", border_style="bold green", box=box.SQUARE))
 
-# Call the login function at the start of your script
-login_user()
+def extract_instagram_username(instagram_url):
+    match = re.search(r"instagram.com/([^/?#&]+)", instagram_url)
+    if match:
+        return match.group(1)
+    else:
+        return None
 
-# Example usage
-file_path = 'Examplar Prospects List.csv'
-df = pd.read_csv(file_path)
-websites = df.iloc[:, 5]  # Adjust the column index as necessary
-
-# Scrape Facebook links and Gmail addresses
-facebook_links = scrape_links(websites, r"facebook.com")
-gmail_addresses = scrape_links(websites, r"\b[A-Za-z0-9._%+-]+@gmail.com\b")
-
-# Print Facebook links and Gmail addresses
-print(Panel.fit("\n".join(facebook_links), title="Facebook Links", border_style="bold blue", box=box.SQUARE))
-print(Panel.fit("\n".join(gmail_addresses), title="Gmail Addresses", border_style="bold magenta", box=box.SQUARE))
-
-# Send Instagram messages
-send_instagram_messages(websites)
+# Implementation 
+send_instagram_message(websites)
+scrape_facebook_and_gmail(websites)
