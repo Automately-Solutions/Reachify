@@ -13,28 +13,21 @@ import logging
 # Setup logging
 logger = logging.getLogger()
 
-# Load the .xlsx file using pandas
-file_path = 'Examplar Prospects List.xlsx'
-df = pd.read_excel(file_path)
+# Load the .csv file using pandas
+file_path = 'Examplar Prospects List.csv'
+df = pd.read_csv(file_path)  # Change to read_csv for CSV files
 
 # Assuming the website links are in column 'F'
 websites = df.iloc[:, 5]  # Adjust the column index as necessary
 
 # Instagrapi client setup with proxy
 cl = Client()
-before_ip = cl._send_public_request("https://api.ipify.org/")
-# Replace "<api_key>" with your actual API key for the proxy service
-cl.set_proxy("http://<api_key>@proxy.soax.com:9137")
-after_ip = cl._send_public_request("https://api.ipify.org/")
-
-print(f"Before: {before_ip}")
-print(f"After: {after_ip}")
 
 cl.delay_range = [1, 3]  # Set delay range for requests
 
 # Replace these with your actual username and password
-USERNAME = "instagram_username"
-PASSWORD = "instagram_password"
+USERNAME = "wordsmith.agency"
+PASSWORD = "wordsmithscriptsforyou"
 
 def login_user():
     """
@@ -77,7 +70,7 @@ def process_websites(websites, df):
                         if username:
                             try:
                                 user_id = cl.user_id_from_username(username)
-                                message = "Your Instagram message here."
+                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. At Pixelevate, we offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
                                 cl.direct_send(message, [user_id])
                                 df.at[index, 'Status'] = 'Done'  # Update the status in the DataFrame
                                 messages_sent += 1
@@ -104,5 +97,5 @@ print(Panel.fit("\n".join(gmail_addresses), title="Gmail Addresses", border_styl
 # Print the count of successfully sent messages
 print(Panel.fit(f"Successfully sent messages: {messages_sent}", border_style="bold green", box=box.SQUARE))
 
-# After processing all websites, save the DataFrame back to an .xlsx file
-df.to_excel('Updated Examplar Prospects List.xlsx', index=False)
+# After processing all websites, save the DataFrame back to a CSV file
+df.to_csv('Updated Examplar Prospects List.csv', index=False)
