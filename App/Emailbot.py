@@ -2,6 +2,9 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from rich import print, text, box
+from rich.panel import Panel
+
 # Your email credentials
 gmail_user = 'raoabdulhadi952@gmail.com'
 gmail_app_password = 'app password'
@@ -30,6 +33,6 @@ try:
     server.sendmail(sent_from, to, email_text.as_string())
     server.close()
 
-    print('Email sent successfully!')
+    print(Panel.fit('Email sent successfully!', border_style="bold greed"))
 except Exception as e:
     print('Something went wrong...', e)
