@@ -1,16 +1,27 @@
-import yagmail
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-def send_email_with_yagmail():
-    # Initialize yagmail with your Gmail account
-    yag = yagmail.SMTP("pixelevatessolutions@gmail.com", "password")
-    
-    # Define the email components
-    recipient = "pixelevatessolutions@gmail.com"
-    subject = "Hello Pixelevate Solutions"
-    content = "Congratulations Pixelevate Solutions, you just sent an email with YAGMAIL!"
-    
-    # Sending the email
-    yag.send(to=recipient, subject=subject, contents=content)
-    print("Email sent successfully!")
+# Your email credentials
+gmail_user = 'your_email@gmail.com'
+gmail_app_password = 'your_app_password'
 
-send_email_with_yagmail()
+# Email content setup
+sent_from = gmail_user
+to = ['recipient_email@example.com']
+subject = 'Hello from Python!'
+body = 'This is a test email sent from a Python script using smtplib.'
+
+email_text = MIMEMultipart()
+email_text['From'] = sent_from
+email_text['To'] = ", ".join(to)
+email_text['Subject'] = subject
+email_text.attach(MIMEText(body, 'plain'))
+
+try:
+    # Setup the SMTP server
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.ehlo()  # Can be omitted
+    server.starttls()  # Secure the connection
+    server.ehlo()  # Can be omitted
+    server.login
