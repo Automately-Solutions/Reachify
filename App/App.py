@@ -23,7 +23,7 @@ websites = df.iloc[:, 5]  # Adjust the column index as necessary
 # Instagrapi client setup with proxy
 cl = Client()
 
-cl.delay_range = [1, 3]  # Set delay range for requests
+cl.delay_range = [10, 15]  # Set delay range for requests
 
 # Replace these with your actual username and password
 USERNAME = "wordsmith.agency"
