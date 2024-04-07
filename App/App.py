@@ -29,6 +29,17 @@ cl.delay_range = [10, 15]  # Set delay range for requests
 USERNAME = "wordsmith.agency"
 PASSWORD = "password"
 
+# Mailjet SMTP credentials
+SMTP_SERVER = "in-v3.mailjet.com"
+SMTP_PORT = 587
+SMTP_USER = 'YourMailjetAPIKey'
+SMTP_PASSWORD = 'YourMailjetSecretKey'
+FROM_EMAIL = 'your_email@example.com'
+SUBJECT = 'Hello from Python via Mailjet'
+EMAIL_BODY = 'This is a test email sent from Python using Mailjet SMTP server.'
+EMAIL_COUNT = 0  # Count of successfully sent emails
+MAX_EMAILS_TO_SEND = 10  # Specify max emails to send
+
 def login_user():
     """
     Login to Instagram with username and password.
@@ -55,7 +66,7 @@ messages_sent = 0
 
 def process_websites(websites, df):
     global messages_sent
-    for index, url in websites.iteritems():
+    for index, url in enumerate(websites.iteritems(), 1):
         try:
             response = requests.get(url, timeout=10)
             if response.status_code == 200:
@@ -87,15 +98,37 @@ def process_websites(websites, df):
         except requests.RequestException as e:
             print(Panel.fit(f"Error: {e}", border_style="bold red", box=box.SQUARE))
             df.at[index, 'Status'] = 'Pending'
-
+            
 process_websites(websites, df)
 
-# Print collected Facebook links and Gmail addresses
-print(Panel.fit("\n".join(facebook_links), title="Facebook Links", border_style="bold blue", box=box.SQUARE))
-print(Panel.fit("\n".join(gmail_addresses), title="Gmail Addresses", border_style="bold magenta", box=box.SQUARE))
+# Function to send emails via Mailjet
+def send_email(recipient_email):
+    global EMAIL_COUNT
+    msg = MIMEMultipart()
+    msg['From'] = FROM_EMAIL
+    msg['To'] = recipient_email
+    msg['Subject'] = SUBJECT
+    msg.attach(MIMEText(EMAIL_BODY, 'plain'))
+    try:
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.send_message(msg)
+        EMAIL_COUNT += 1
+        print(Panel.fit(f"Email sent to {recipient_email}", border_style="bold green", box=box.SQUARE))
+        time.sleep(25)  # Delay between each email
+    except Exception as e:
+        print(f"Failed to send email to {recipient_email}: {e}")
+    finally:
+        server.quit()
 
-# Print the count of successfully sent messages
-print(Panel.fit(f"Successfully sent messages: {messages_sent}", border_style="bold green", box=box.SQUARE))
+# Send emails to collected Gmail addresses
+for email in gmail_addresses[:MAX_EMAILS_TO_SEND]:  # Limit the emails sent
+    send_email(email)
+
+# Print the count of successfully sent messages and emails
+print(Panel.fit(f"Successfully sent Instagram messages: {messages_sent}", border_style="bold green", box=box.SQUARE))
+print(Panel.fit(f"Successfully sent emails: {EMAIL_COUNT}", border_style="bold green", box=box.SQUARE))
 
 # After processing all websites, save the DataFrame back to a CSV file
 df.to_csv('Updated Examplar Prospects List.csv', index=False)
