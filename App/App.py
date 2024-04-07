@@ -27,7 +27,7 @@ cl.delay_range = [10, 15]  # Set delay range for requests
 
 # Replace these with your actual username and password
 USERNAME = "wordsmith.agency"
-PASSWORD = "wordsmithscriptsforyou"
+PASSWORD = "password"
 
 def login_user():
     """
