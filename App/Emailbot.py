@@ -10,17 +10,18 @@ api_secret = '-'
 mailjet = Client(auth=(api_key, api_secret), version='v3.1')
 
 # Function to scrape the website for a Gmail address
-def scrape_website_for_gmail(url):
+def scrape_website_for_email(url):
     try:
         response = requests.get(url, timeout=10)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
             text = soup.get_text()
-            gmail_addresses = re.findall(r"[a-zA-Z0-9_.+-]+@gmail.com", text)
-            if gmail_addresses:
-                return gmail_addresses[0]  # Return the first found Gmail address
+            # Updated regex to capture more general email addresses
+            email_addresses = re.findall(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", text)
+            if email_addresses:
+                return email_addresses[0]  # Return the first found email address
             else:
-                print(f"No Gmail addresses found on {url}.")
+                print(f"No email addresses found on {url}.")
                 return None
     except requests.RequestException as e:
         print(f"Failed to access {url}: {e}")
@@ -36,7 +37,7 @@ def send_email(recipient_email):
       'Messages': [
         {
           "From": {
-            "Email": "wordsmithscript@gmail.com",
+            "Email": "your_sender_email@gmail.com",
             "Name": "Sender Name"
           },
           "To": [
@@ -62,9 +63,9 @@ def process_urls_from_csv(csv_file_path):
         reader = csv.reader(csvfile)
         next(reader)  # Skip the header row
         for row in reader:
-            website_url = row[5]  # Assuming 'F' column is the 6th column (0-indexed)
+            website_url = row[5]  # Assuming 'F' column is the 6th column
             print(f"Processing website: {website_url}")
-            scraped_email = scrape_website_for_gmail(website_url)
+            scraped_email = scrape_website_for_email(website_url)
             
             if scraped_email:
                 print(f"Sending email to {scraped_email}...")
@@ -74,5 +75,5 @@ def process_urls_from_csv(csv_file_path):
 
 # Main execution
 if __name__ == "__main__":
-    csv_file_path = "websites.csv"  # Replace with your CSV file path
+    csv_file_path = "Examplar Prospects List.csv"  # Replace with your actual CSV file path
     process_urls_from_csv(csv_file_path)
