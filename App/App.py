@@ -27,18 +27,18 @@ cl.delay_range = [10, 15]  # Set delay range for requests
 
 # Replace these with your actual username and password
 USERNAME = "wordsmith.agency"
-PASSWORD = "password"
+PASSWORD = "-"
 
 # Mailjet SMTP credentials
 SMTP_SERVER = "in-v3.mailjet.com"
 SMTP_PORT = 587
-SMTP_USER = 'YourMailjetAPIKey'
-SMTP_PASSWORD = 'YourMailjetSecretKey'
-FROM_EMAIL = 'your_email@example.com'
-SUBJECT = 'Hello from Python via Mailjet'
-EMAIL_BODY = 'This is a test email sent from Python using Mailjet SMTP server.'
+SMTP_USER = '-'
+SMTP_PASSWORD = '-'
+FROM_EMAIL = 'wordsmithscript@gmail.com'
+SUBJECT = 'My MILLION DOLLAR offer to you'
+EMAIL_BODY = 'I have been impressed by your service quality and the audience you have attracted. Here is an offer for you: At WordSmith, we deliver expert product design and graphic services, and here is the twist - you will not pay a cent until you see satisfactory results. Its all about elevating your brand visual identity with the summer demand surges, risk-free. Would you be open to exploring this unique opportunity to enhance your visuals without upfront costs?'
 EMAIL_COUNT = 0  # Count of successfully sent emails
-MAX_EMAILS_TO_SEND = 10  # Specify max emails to send
+MAX_EMAILS_TO_SEND = 30  # Specify max emails to send
 
 def login_user():
     """
@@ -68,7 +68,7 @@ def process_websites(websites, df):
     global messages_sent
     for index, url in enumerate(websites.iteritems(), 1):
         try:
-            response = requests.get(url, timeout=10)
+            response = requests.get("https://www.efectivee.com", timeout=10)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 links = soup.find_all('a', href=True)
