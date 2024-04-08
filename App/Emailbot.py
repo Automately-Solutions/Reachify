@@ -1,34 +1,59 @@
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from bs4 import BeautifulSoup
+import requests
+from mailjet_rest import Client
+import os
 
-# Mailjet SMTP credentials
-SMTP_SERVER = "in-v3.mailjet.com"
-SMTP_PORT = 587
-SMTP_USER = 'API Key'
-SMTP_PASSWORD = 'Secret Key'
+# Mailjet setup
+api_key = 'your_mailjet_api_key'
+api_secret = 'your_mailjet_api_secret'
+mailjet = Client(auth=(api_key, api_secret), version='v3.1')
 
-# Email parameters
-FROM_EMAIL = 'wordsmithscript@gmail.com'  # Your registered Mailjet email
-TO_EMAIL = 'raoabdulhadi952@gmail.com'
-SUBJECT = 'Test Email from Python'
-BODY = 'This is a test email sent from Python using Mailjet SMTP.'
+# Define the single website URL for testing
+website_url = "https://example.com"  # Replace with the website you want to test
 
-# Create MIME message
-msg = MIMEMultipart()
-msg['From'] = FROM_EMAIL
-msg['To'] = TO_EMAIL
-msg['Subject'] = SUBJECT
-msg.attach(MIMEText(BODY, 'plain'))
+# Function to scrape the website
+def scrape_website(url):
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # Example: print all 'a' tags to demonstrate scraping
+            # Modify as needed to extract specific links or information
+            for link in soup.find_all('a', href=True):
+                print(link.get('href'))
+    except requests.RequestException as e:
+        print(f"Failed to access {url}: {e}")
 
-# Send email
-try:
-    server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-    server.starttls()  # Secure the connection
-    server.login(SMTP_USER, SMTP_PASSWORD)
-    server.send_message(msg)
-    print("Email sent successfully!")
-except Exception as e:
-    print(f"Failed to send email: {e}")
-finally:
-    server.quit()
+# Function to send an email using Mailjet
+def send_email():
+    data = {
+      'Messages': [
+        {
+          "From": {
+            "Email": "sender_email@example.com",
+            "Name": "Sender Name"
+          },
+          "To": [
+            {
+              "Email": "recipient_email@example.com",
+              "Name": "Recipient Name"
+            }
+          ],
+          "Subject": "Greetings from Mailjet.",
+          "TextPart": "My first Mailjet email",
+          "HTMLPart": "<h3>Dear passenger 1, welcome to <a href='https://www.mailjet.com/'>Mailjet</a>!</h3><br />May the delivery force be with you!",
+          "CustomID": "AppGettingStartedTest"
+        }
+      ]
+    }
+    result = mailjet.send.create(data=data)
+    print(result.status_code)
+    print(result.json())
+
+# Main execution
+if __name__ == "__main__":
+    print(f"Scraping website: {website_url}")
+    scrape_website(website_url)
+    
+    print("Sending test email with Mailjet...")
+    send_email()
