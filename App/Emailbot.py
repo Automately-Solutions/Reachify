@@ -5,7 +5,7 @@ from mailjet_rest import Client
 import csv  # For CSV file handling
 
 # Mailjet setup
-api_key = '372eefae66841cfce3f97b7ddcc5473a'
+api_key = '-'
 api_secret = '-'
 mailjet = Client(auth=(api_key, api_secret), version='v3.1')
 
