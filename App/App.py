@@ -9,6 +9,8 @@ from bs4 import BeautifulSoup
 import re
 from instagrapi import Client, exceptions
 import logging
+from mailjet_rest import Client as MailjetClient
+import time
 
 # Setup logging
 logger = logging.getLogger()
@@ -29,14 +31,11 @@ cl.delay_range = [10, 15]  # Set delay range for requests
 USERNAME = "wordsmith.agency"
 PASSWORD = "-"
 
-# Mailjet SMTP credentials
-SMTP_SERVER = "in-v3.mailjet.com"
-SMTP_PORT = 587
-SMTP_USER = '-'
-SMTP_PASSWORD = '-'
-FROM_EMAIL = 'wordsmithscript@gmail.com'
-SUBJECT = 'My MILLION DOLLAR offer to you'
-EMAIL_BODY = 'I have been impressed by your service quality and the audience you have attracted. Here is an offer for you: At WordSmith, we deliver expert product design and graphic services, and here is the twist - you will not pay a cent until you see satisfactory results. Its all about elevating your brand visual identity with the summer demand surges, risk-free. Would you be open to exploring this unique opportunity to enhance your visuals without upfront costs?'
+# Mailjet setup
+api_key = 'your_mailjet_api_key'
+api_secret = 'your_mailjet_api_secret'
+mailjet = MailjetClient(auth=(api_key, api_secret), version='v3.1')
+
 EMAIL_COUNT = 0  # Count of successfully sent emails
 MAX_EMAILS_TO_SEND = 30  # Specify max emails to send
 
@@ -66,11 +65,16 @@ messages_sent = 0
 
 def process_websites(websites, df):
     global messages_sent
-    for index, url in enumerate(websites.iteritems(), 1):
+    for index, row in websites.iteritems():
+        url = row
         try:
-            response = requests.get("https://www.efectivee.com", timeout=10)
+            response = requests.get(url, timeout=10)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
+                text = soup.get_text()
+                # Extracting all email addresses, not just Gmail
+                emails_found = re.findall(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", text)
+                gmail_addresses.extend(emails_found)
                 links = soup.find_all('a', href=True)
                 for link in links:
                     href = link['href']
@@ -81,7 +85,7 @@ def process_websites(websites, df):
                         if username:
                             try:
                                 user_id = cl.user_id_from_username(username)
-                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. At Pixelevate, we offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
+                                message = "Your personalized message here."
                                 cl.direct_send(message, [user_id])
                                 df.at[index, 'Status'] = 'Done'  # Update the status in the DataFrame
                                 messages_sent += 1
@@ -90,39 +94,43 @@ def process_websites(websites, df):
                             except exceptions.UserNotFound:
                                 print(Panel.fit(f"Instagram user {username} not found. Skipping...", border_style="bold yellow", box=box.SQUARE))
                                 df.at[index, 'Status'] = 'Pending'
-                text = soup.get_text()
-                gmail_addresses.extend(re.findall(r"[a-zA-Z0-9_.+-]+@gmail.com", text))
             else:
                 print(Panel.fit(f"Could not retrieve {url}", border_style="bold red", box=box.SQUARE))
                 df.at[index, 'Status'] = 'Pending'
         except requests.RequestException as e:
             print(Panel.fit(f"Error: {e}", border_style="bold red", box=box.SQUARE))
             df.at[index, 'Status'] = 'Pending'
-            
-process_websites(websites, df)
 
-# Function to send emails via Mailjet
 def send_email(recipient_email):
     global EMAIL_COUNT
-    msg = MIMEMultipart()
-    msg['From'] = FROM_EMAIL
-    msg['To'] = recipient_email
-    msg['Subject'] = SUBJECT
-    msg.attach(MIMEText(EMAIL_BODY, 'plain'))
-    try:
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        server.starttls()
-        server.login(SMTP_USER, SMTP_PASSWORD)
-        server.send_message(msg)
+    data = {
+      'Messages': [
+        {
+          "From": {
+            "Email": "wordsmithscript@gmail.com",
+            "Name": "WordSmith Corp."
+          },
+          "To": [
+            {
+              "Email": recipient_email,
+              "Name": recipient_email
+            }
+          ],
+          "Subject": "My MILLION DOLLAR offer to you.",
+          "TextPart": "I have been impressed by your service quality and the audience you have attracted. Here's an offer for you: At WordSmith, we deliver expert product design and graphic services, and here is the twist - you dont pay a cent until you see satisfactory results. It is all about elevating your brand visual identity with the summer demand surges, risk-free. Would you be open to exploring this unique opportunity to enhance your visuals without upfront costs?",
+          "HTMLPart": "<h3>Are you up for this lifetime opportunity ?.</h3>",
+          "CustomID": "WordSmithOutreach"
+        }
+      ]
+    }
+    result = mailjet.send.create(data=data)
+    if result.status_code == 200:
         EMAIL_COUNT += 1
         print(Panel.fit(f"Email sent to {recipient_email}", border_style="bold green", box=box.SQUARE))
-        time.sleep(25)  # Delay between each email
-    except Exception as e:
-        print(f"Failed to send email to {recipient_email}: {e}")
-    finally:
-        server.quit()
+    else:
+        print(Panel.fit(f"Failed to send email to {recipient_email}: {result.json()}", border_style="bold red", box=box.SQUARE))
 
-# Send emails to collected Gmail addresses
+# Replace the direct SMTP email sending with calls to the new send_email function
 for email in gmail_addresses[:MAX_EMAILS_TO_SEND]:  # Limit the emails sent
     send_email(email)
 
