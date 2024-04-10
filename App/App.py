@@ -1,4 +1,6 @@
-from rich import print, box
+from rich import text
+from rich import box
+from rich import print
 from rich.panel import Panel
 from rich.traceback import install
 install(show_locals=True)
@@ -7,37 +9,33 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import re
-from instagrapi import Client, exceptions
+from instagrapi import Client
+from instagrapi.exceptions import UserNotFound, LoginRequired
 import logging
 from mailjet_rest import Client as MailjetClient
-import time
 
 # Setup logging
 logger = logging.getLogger()
 
-# Load the .csv file using pandas
+# Load the CSV file
 file_path = 'Examplar Prospects List.csv'
-df = pd.read_csv(file_path)  # Change to read_csv for CSV files
+df = pd.read_csv(file_path)
 
 # Assuming the website links are in column 'F'
 websites = df.iloc[:, 5]  # Adjust the column index as necessary
 
-# Instagrapi client setup with proxy
+# Instagrapi client setup
 cl = Client()
-
 cl.delay_range = [10, 15]  # Set delay range for requests
 
 # Replace these with your actual username and password
-USERNAME = "wordsmith.agency"
-PASSWORD = "-"
+USERNAME = "ig_user"
+PASSWORD = "ig_pass"
 
 # Mailjet setup
-api_key = 'your_mailjet_api_key'
-api_secret = 'your_mailjet_api_secret'
-mailjet = MailjetClient(auth=(api_key, api_secret), version='v3.1')
-
-EMAIL_COUNT = 0  # Count of successfully sent emails
-MAX_EMAILS_TO_SEND = 30  # Specify max emails to send
+mailjet_api_key = 'mailjet_api_key'
+mailjet_api_secret = 'mailjet_secret_key'
+mailjet_client = MailjetClient(auth=(mailjet_api_key, mailjet_api_secret), version='v3.1')
 
 def login_user():
     """
@@ -52,6 +50,93 @@ def login_user():
 
 login_user()
 
+def scrape_facebook_and_gmail(websites):
+    facebook_links = []
+    gmail_addresses = []
+
+    for url in websites:
+        try:
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                links = soup.find_all('a', href=True)
+                for link in links:
+                    href = link['href']
+                    if "facebook.com" in href:
+                        facebook_links.append(href)
+                text = soup.get_text()
+                gmail_addresses.extend(re.findall(r"[a-zA-Z0-9_.+-]+@gmail.com", text))
+        except requests.RequestException as e:
+            logger.error(f"Error fetching {url}: {e}")
+    
+    # Print all Facebook links
+    print(Panel.fit("\n".join(facebook_links), title="Facebook Links", border_style="bold blue", box=box.SQUARE))
+    # Print all Gmail addresses
+    print(Panel.fit("\n".join(gmail_addresses), title="Gmail Addresses", border_style="bold magenta", box=box.SQUARE))
+
+    # Email sending to the scraped Gmail addresses
+    for email in gmail_addresses:
+        send_email(email)
+
+def send_email(recipient_email):
+    data = {
+      'Messages': [
+        {
+          "From": {
+            "Email": "wordsmith.agency@example.com",
+            "Name": "WordSmith Agency"
+          },
+          "To": [
+            {
+              "Email": recipient_email,
+              "Name": "Valued Prospect"
+            }
+          ],
+          "Subject": "Unlocking Potential with WordSmith Agency",
+          "TextPart": "Greetings, We've noticed your potential and we're excited to offer our services to help elevate your business. Let's connect for a transformative collaboration.",
+          "HTMLPart": "<h3>Ready to Elevate Your Business?</h3><p>We at WordSmith Agency are thrilled at the prospect of working with you. Let's make something great together.</p>",
+          "CustomID": "AppGettingStartedTest"
+        }
+      ]
+    }
+    result = mailjet_client.send.create(data=data)
+    if result.status_code == 200:
+        print(Panel.fit(f"Email successfully sent to {recipient_email}", border_style="bold green", box=box.SQUARE))
+    else:
+        print(Panel.fit(f"Failed to send email to {recipient_email}. Error: {result.json()}", border_style="bold red", box=box.SQUARE))
+
+def send_instagram_message(websites):
+    messages_sent = 0
+    for url in websites:
+        found_instagram = False
+        try:
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                links = soup.find_all('a', href=True)
+                for link in links:
+                    href = link['href']
+                    if "instagram.com" in href:
+                        username = extract_instagram_username(href)
+                        if username:
+                            found_instagram = True
+                            try:
+                                user_id = cl.user_id_from_username(username)
+                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. At Pixelevate, we offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
+                                cl.direct_send(message, [user_id])
+                                print(Panel.fit(f"Message sent to {username}", border_style="bold green", box=box.SQUARE))
+                                messages_sent += 1
+                            except UserNotFound:
+                                print(Panel.fit(f"Instagram user {username} not found. Skipping...", border_style="bold yellow", box=box.SQUARE))
+                            break
+            else:
+                print(Panel.fit(f"Could not retrieve {url}", border_style="bold red", box=box.SQUARE))
+        except requests.RequestException as e:
+            print(Panel.fit(f"Error: {e}", border_style="bold red", box=box.SQUARE))
+
+    # Print the count of successfully sent messages
+    print(Panel.fit(f"Successfully sent messages: {messages_sent}", border_style="bold green", box=box.SQUARE))
+
 def extract_instagram_username(instagram_url):
     match = re.search(r"instagram.com/([^/?#&]+)", instagram_url)
     if match:
@@ -59,84 +144,6 @@ def extract_instagram_username(instagram_url):
     else:
         return None
 
-facebook_links = []
-gmail_addresses = []
-messages_sent = 0
-
-def process_websites(websites, df):
-    global messages_sent
-    for index, row in websites.iteritems():
-        url = row
-        try:
-            response = requests.get(url, timeout=10)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                text = soup.get_text()
-                # Extracting all email addresses, not just Gmail
-                emails_found = re.findall(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", text)
-                gmail_addresses.extend(emails_found)
-                links = soup.find_all('a', href=True)
-                for link in links:
-                    href = link['href']
-                    if "facebook.com" in href:
-                        facebook_links.append(href)
-                    if "instagram.com" in href:
-                        username = extract_instagram_username(href)
-                        if username:
-                            try:
-                                user_id = cl.user_id_from_username(username)
-                                message = "Your personalized message here."
-                                cl.direct_send(message, [user_id])
-                                df.at[index, 'Status'] = 'Done'  # Update the status in the DataFrame
-                                messages_sent += 1
-                                print(Panel.fit(f"Message sent to {username}", border_style="bold green", box=box.SQUARE))
-                                break
-                            except exceptions.UserNotFound:
-                                print(Panel.fit(f"Instagram user {username} not found. Skipping...", border_style="bold yellow", box=box.SQUARE))
-                                df.at[index, 'Status'] = 'Pending'
-            else:
-                print(Panel.fit(f"Could not retrieve {url}", border_style="bold red", box=box.SQUARE))
-                df.at[index, 'Status'] = 'Pending'
-        except requests.RequestException as e:
-            print(Panel.fit(f"Error: {e}", border_style="bold red", box=box.SQUARE))
-            df.at[index, 'Status'] = 'Pending'
-
-def send_email(recipient_email):
-    global EMAIL_COUNT
-    data = {
-      'Messages': [
-        {
-          "From": {
-            "Email": "wordsmithscript@gmail.com",
-            "Name": "WordSmith Corp."
-          },
-          "To": [
-            {
-              "Email": recipient_email,
-              "Name": recipient_email
-            }
-          ],
-          "Subject": "My MILLION DOLLAR offer to you.",
-          "TextPart": "I have been impressed by your service quality and the audience you have attracted. Here's an offer for you: At WordSmith, we deliver expert product design and graphic services, and here is the twist - you dont pay a cent until you see satisfactory results. It is all about elevating your brand visual identity with the summer demand surges, risk-free. Would you be open to exploring this unique opportunity to enhance your visuals without upfront costs?",
-          "HTMLPart": "<h3>Are you up for this lifetime opportunity ?.</h3>",
-          "CustomID": "WordSmithOutreach"
-        }
-      ]
-    }
-    result = mailjet.send.create(data=data)
-    if result.status_code == 200:
-        EMAIL_COUNT += 1
-        print(Panel.fit(f"Email sent to {recipient_email}", border_style="bold green", box=box.SQUARE))
-    else:
-        print(Panel.fit(f"Failed to send email to {recipient_email}: {result.json()}", border_style="bold red", box=box.SQUARE))
-
-# Replace the direct SMTP email sending with calls to the new send_email function
-for email in gmail_addresses[:MAX_EMAILS_TO_SEND]:  # Limit the emails sent
-    send_email(email)
-
-# Print the count of successfully sent messages and emails
-print(Panel.fit(f"Successfully sent Instagram messages: {messages_sent}", border_style="bold green", box=box.SQUARE))
-print(Panel.fit(f"Successfully sent emails: {EMAIL_COUNT}", border_style="bold green", box=box.SQUARE))
-
-# After processing all websites, save the DataFrame back to a CSV file
-df.to_csv('Updated Examplar Prospects List.csv', index=False)
+# Implementation 
+send_instagram_message(websites)
+scrape_facebook_and_gmail(websites)
