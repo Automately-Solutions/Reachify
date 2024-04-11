@@ -122,10 +122,13 @@ def send_instagram_message(websites):
                             found_instagram = True
                             try:
                                 user_id = cl.user_id_from_username(username)
-                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. At Pixelevate, we offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
+                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. At WordSmith, we offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
                                 cl.direct_send(message, [user_id])
                                 print(Panel.fit(f"Message sent to {username}", border_style="bold green", box=box.SQUARE))
                                 messages_sent += 1
+                                if messages_sent % 17 == 0:  # Check if 17 messages have been sent
+                                    print("Pausing for a minute to avoid rate limiting...")
+                                    time.sleep(60)  # Pause for 60 seconds
                             except UserNotFound:
                                 print(Panel.fit(f"Instagram user {username} not found. Skipping...", border_style="bold yellow", box=box.SQUARE))
                             break
@@ -133,9 +136,6 @@ def send_instagram_message(websites):
                 print(Panel.fit(f"Could not retrieve {url}", border_style="bold red", box=box.SQUARE))
         except requests.RequestException as e:
             print(Panel.fit(f"Error: {e}", border_style="bold red", box=box.SQUARE))
-
-    # Print the count of successfully sent messages
-    print(Panel.fit(f"Successfully sent messages: {messages_sent}", border_style="bold green", box=box.SQUARE))
 
 def extract_instagram_username(instagram_url):
     match = re.search(r"instagram.com/([^/?#&]+)", instagram_url)
