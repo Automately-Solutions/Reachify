@@ -27,7 +27,7 @@ websites = df.iloc[:, 5]  # Adjust the column index as necessary
 
 # Instagrapi client setup
 cl = Client()
-cl.delay_range = [10, 15]  # Set delay range for requests
+cl.delay_range = [20, 30]  # Set delay range for requests
 
 # Replace these with your actual username and password
 USERNAME = "ig_user"
@@ -84,7 +84,7 @@ def send_email(recipient_email):
       'Messages': [
         {
           "From": {
-            "Email": "wordsmith.agency@example.com",
+            "Email": "wordsmithscript@gmail.com",
             "Name": "WordSmith Agency"
           },
           "To": [
@@ -129,7 +129,7 @@ def send_instagram_message(websites):
                                 messages_sent += 1
                                 if messages_sent % 17 == 0:  # Check if 17 messages have been sent
                                     print("Pausing for a minute to avoid rate limiting...")
-                                    time.sleep(60)  # Pause for 60 seconds
+                                    time.sleep(120)  # Pause for 120 seconds
                             except UserNotFound:
                                 print(Panel.fit(f"Instagram user {username} not found. Skipping...", border_style="bold yellow", box=box.SQUARE))
                             break
