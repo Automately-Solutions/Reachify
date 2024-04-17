@@ -27,7 +27,7 @@ websites = df.iloc[:, 5]  # Adjust the column index as necessary
 
 # Instagrapi client setup
 cl = Client()
-cl.delay_range = [30, 45]  # Set delay range for requests
+cl.delay_range = [45, 50]  # Set delay range for requests
 
 # Replace these with your actual username and password
 USERNAME = "ig_user"
@@ -109,6 +109,8 @@ def send_email(recipient_email):
 def send_instagram_message(websites):
     messages_sent = 0
     for url in websites:
+        if messages_sent >= 18:
+            break  # Stop sending messages after 18
         found_instagram = False
         try:
             response = requests.get(url, timeout=10)
@@ -123,16 +125,12 @@ def send_instagram_message(websites):
                             found_instagram = True
                             try:
                                 user_id = cl.user_id_from_username(username)
-                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. At WordSmith, we offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
+                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. At Pixelevates, we offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
                                 cl.direct_send(message, [user_id])
-                                print(Panel.fit(f"Message sent to {username}", border_style="bold green", box=box.SQUARE))
                                 messages_sent += 1
-                                if messages_sent % 15 == 0:  # Check if 17 messages have been sent
-                                    print("Pausing for a minute to avoid rate limiting...")
-                                    time.sleep(240)  # Pause for 240 seconds / 4 Minutes
+                                break  # Move to next website after sending a message
                             except UserNotFound:
                                 print(Panel.fit(f"Instagram user {username} not found. Skipping...", border_style="bold yellow", box=box.SQUARE))
-                            break
             else:
                 print(Panel.fit(f"Could not retrieve {url}", border_style="bold red", box=box.SQUARE))
         except requests.RequestException as e:
