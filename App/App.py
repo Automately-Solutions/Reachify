@@ -109,7 +109,7 @@ def send_email(recipient_email):
 def send_instagram_message(websites):
     messages_sent = 0
     for url in websites:
-        if messages_sent >= 18:
+        if messages_sent >= 15:
             break  # Stop sending messages after 18
         found_instagram = False
         try:
@@ -125,7 +125,7 @@ def send_instagram_message(websites):
                             found_instagram = True
                             try:
                                 user_id = cl.user_id_from_username(username)
-                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. At Pixelevates, we offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
+                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. We offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
                                 cl.direct_send(message, [user_id])
                                 messages_sent += 1
                                 break  # Move to next website after sending a message
