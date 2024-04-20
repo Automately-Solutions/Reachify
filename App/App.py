@@ -43,8 +43,8 @@ def login_user():
     Login to Instagram with username and password.
     """
     try:
-        if cl.login(USERNAME, PASSWORD):
-            logger.info("Logged in successfully.")
+        cl.login(USERNAME, PASSWORD)
+        logger.info("Logged in successfully.")
     except Exception as e:
         logger.error(f"Login failed: {e}")
         raise Exception("Login failed")
@@ -84,13 +84,13 @@ def send_email(recipient_email):
       'Messages': [
         {
           "From": {
-            "Email": "wordsmithscript@gmail.com",
-            "Name": "WordSmith Agency"
+            "Email": "wordsmithscripts@gmail.com",
+            "Name": "WordSmith Corp."
           },
           "To": [
             {
               "Email": recipient_email,
-              "Name": "Valued Prospect"
+              "Name": "Recipient Name or Title"
             }
           ],
           "Subject": "Unlocking Potential with WordSmith Agency",
@@ -110,7 +110,7 @@ def send_instagram_message(websites):
     messages_sent = 0
     for url in websites:
         if messages_sent >= 15:
-            break  # Stop sending messages after 18
+            break  # Stop sending messages after 15
         found_instagram = False
         try:
             response = requests.get(url, timeout=10)
@@ -127,6 +127,7 @@ def send_instagram_message(websites):
                                 user_id = cl.user_id_from_username(username)
                                 message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. We offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
                                 cl.direct_send(message, [user_id])
+                                cl.direct_send(message, user_id)
                                 messages_sent += 1
                                 break  # Move to next website after sending a message
                             except UserNotFound:
@@ -135,6 +136,12 @@ def send_instagram_message(websites):
                 print(Panel.fit(f"Could not retrieve {url}", border_style="bold red", box=box.SQUARE))
         except requests.RequestException as e:
             print(Panel.fit(f"Error: {e}", border_style="bold red", box=box.SQUARE))
+        except LoginRequired:
+            # Try to re-login if not logged in
+            logger.error("Login required. Trying to re-login.")
+            login_user()
+            time.sleep(600)  # Wait for some time before retrying
+            continue  # Retry sending the message
 
 def extract_instagram_username(instagram_url):
     match = re.search(r"instagram.com/([^/?#&]+)", instagram_url)
