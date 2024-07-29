@@ -1,4 +1,9 @@
-# Reachify: Automate Your Client Outreach
+<div align="center">
+    <img src="https://github.com/user-attachments/assets/a64483df-84cc-4776-a51b-4b86e14b9e7a" alt="image" />
+</div>
+
+<h1 align="center">Reachify: Automate Your Client Outreach</h1>
+
 [![wakatime](https://wakatime.com/badge/user/04c60a11-7fcd-4d1d-accf-a4bb74ceedec/project/018e9cf7-12f0-451b-b48e-3a1f96f2f527.svg)](https://wakatime.com/badge/user/04c60a11-7fcd-4d1d-accf-a4bb74ceedec/project/018e9cf7-12f0-451b-b48e-3a1f96f2f527)
 
 **Reachify** is revolutionizing how Social Media Marketing Agencies (SMMA) and Software as a Service (SAAS) agencies manage their client outreach. By harnessing the power of automation, **Reachify** streamlines the process of connecting with potential clients, nurturing leads, and converting those leads into loyal customers, all from one intuitive platform.
@@ -23,6 +28,10 @@ To get started with **Reachify**, follow these simple steps:
 4. **Analyze and Optimize**: Monitor your campaigns and use insights to optimize your outreach efforts.
 
 For more detailed instructions, please refer to our [Getting Started Guide](/docs/getting_started.md).
+
+<div align="center">
+    <img src="https://github.com/user-attachments/assets/c7224ae3-ba50-4fa4-8eb6-bcd2a995ee99" alt="image" />
+</div>
 
 ## Documentation 📖
 
