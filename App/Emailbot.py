@@ -6,6 +6,12 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from rich.panel import Panel
+from rich import box
+from rich import print
+from rich.traceback import install
+install(show_locals=True)
+
 # Update these with your actual details
 SMTP_SERVER = "in-v3.mailjet.com"
 SMTP_PORT = 587
@@ -32,9 +38,9 @@ def scrape_emails(url):
             email_addresses.extend(emails)
             print(f"Found emails: {emails} in {url}")
         else:
-            print(f"Failed to access {url}")
+            print(Panel.fit(f"Failed to access {url}", box=box.SQUARE, border_style="bold red"))
     except requests.RequestException as e:
-        print(f"Request failed: {e}")
+        print(Panel.fit(f"Request failed: {e}", border_style="bold red", box=box.SQUARE))
 
 def send_email(recipient_email):
     """Send an email to the specified recipient."""
@@ -48,7 +54,7 @@ def send_email(recipient_email):
         server.starttls()
         server.login(SMTP_USER, SMTP_PASSWORD)
         server.send_message(msg)
-        print(f"Email sent to {recipient_email}")
+        print(Panel.fit(f"Email sent to {recipient_email}", border_style="bold green", box=box.SQUARE))
     except Exception as e:
         print(f"Failed to send email to {recipient_email}: {e}")
     finally:
