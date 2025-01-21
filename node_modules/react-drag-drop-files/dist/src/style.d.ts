@@ -1,0 +1,1 @@
+export declare const UploaderWrapper: import("styled-components/dist/types").IStyledComponentBase<"web", any> & string;
