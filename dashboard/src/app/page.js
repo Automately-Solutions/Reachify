@@ -25,14 +25,15 @@ export default function Home() {
         <div>
             <FileUploader 
                 handleChange={handleChange} 
+                uploadedLabel="Successfully Uploaded file"
                 name="file" 
                 types={fileTypes} />
             {file && (
                 <div style={{ marginTop: "20px" }}>
                     <h4>Image Preview:</h4>
                     <img 
-                        src={file} 
-                        alt="Uploaded Preview" 
+                        src={file}
+                        alt="Uploaded Preview"
                         style={{ maxWidth: "100%", height: "auto" }} />
                 </div>
             )}
