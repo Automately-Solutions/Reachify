@@ -19,23 +19,23 @@ import time
 logger = logging.getLogger()
 
 # Load the CSV file
-file_path = 'Examplar Prospects List.csv'
+file_path = open("/Documents/Development/Reachify/App/Examplar Prospects List.csv")
 df = pd.read_csv(file_path)
 
-# Assuming the website links are in column 'F'
-websites = df.iloc[:, 5]  # Adjust the column index as necessary
+# Assuming the website links are in column 'C'
+websites = df.iloc[:, 2]  # Adjust the column index as necessary
 
 # Instagrapi client setup
 cl = Client()
 cl.delay_range = [45, 50]  # Set delay range for requests
 
-# Replace these with your actual username and password
-USERNAME = "ig_user"
-PASSWORD = "ig_pass"
+# Replace these with your actual IG username and password
+USERNAME = "USERNAME"
+PASSWORD = "PASSWORD"
 
 # Mailjet setup
-mailjet_api_key = 'mailjet_api_key'
-mailjet_api_secret = 'mailjet_secret_key'
+mailjet_api_key = 'MAILJET_API_KEY'
+mailjet_api_secret = 'MAILJET_SECRET_KEY'
 mailjet_client = MailjetClient(auth=(mailjet_api_key, mailjet_api_secret), version='v3.1')
 
 def login_user():
@@ -90,13 +90,27 @@ def send_email(recipient_email):
           "To": [
             {
               "Email": recipient_email,
-              "Name": "Recipient Name or Title"
+              "Name": "Dear Valued Customer"
             }
           ],
-          "Subject": "Unlocking Potential with WordSmith Agency",
-          "TextPart": "Greetings, We've noticed your potential and we're excited to offer our services to help elevate your business. Let's connect for a transformative collaboration.",
-          "HTMLPart": "<h3>Ready to Elevate Your Business?</h3><p>We at WordSmith Agency are thrilled at the prospect of working with you. Let's make something great together.</p>",
-          "CustomID": "AppGettingStartedTest"
+          "Subject": "Loved your last post",
+          "TextPart": """I just came across your latest post and loved it, but I have the hack to solve your low traffic problem without the normal hassle. I have been impressed with the quality of your services yet I notice you struggling with :
+
+                        — Finding new clients for your business
+                        — Improving the quality of leads you get
+                        — Increasing your web traffic and profits
+                        
+                        I believe I can help you overcome these issues, and I am willing to do it for free to prove myself to you. If you are interested, you can reply “START” to this email and I will be in-touch with you shortly.
+                        
+                        I have attached some of my previous work below the email to give you a sense of quality of the designs you could expect from my side.
+                        
+                        Again, If you’re busy, I can understand.
+                        
+                        Rao, Chief Executive Officer
+                        Upkick Marketing Agency
+                        upkick.marketing [Instagram]
+                        wordsmithscript@gmail.com [Email]""",
+          "CustomID": "OutreachTestingRuns"
         }
       ]
     }
@@ -125,7 +139,7 @@ def send_instagram_message(websites):
                             found_instagram = True
                             try:
                                 user_id = cl.user_id_from_username(username)
-                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. We offer expert digital marketing with a twist: no payment until you see results. Ready to make this summer your most profitable one? Let's chat."
+                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. We offer expert digital marketing with a twist: no payment until you see results. Let's chat."
                                 cl.direct_send(message, [user_id])
                                 cl.direct_send(message, user_id)
                                 messages_sent += 1
@@ -150,6 +164,6 @@ def extract_instagram_username(instagram_url):
     else:
         return None
 
-# Implementation 
+# Implementation
 send_instagram_message(websites)
 scrape_facebook_and_gmail(websites)
