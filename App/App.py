@@ -1,169 +1,30 @@
-from rich import text
-from rich import box
-from rich import print
-from rich.panel import Panel
 from rich.traceback import install
+import pandas as pd
+import os
+
+# Enable rich traceback for better debugging
 install(show_locals=True)
 
-import pandas as pd
-import requests
-from bs4 import BeautifulSoup
-import re
-from instagrapi import Client
-from instagrapi.exceptions import UserNotFound, LoginRequired
-import logging
-from mailjet_rest import Client as MailjetClient
-import time
-
-# Setup logging
-logger = logging.getLogger()
-
-# Load the CSV file
-file_path = open("/Documents/Development/Reachify/App/Examplar Prospects List.csv")
-df = pd.read_csv(file_path)
-
-# Assuming the website links are in column 'C'
-websites = df.iloc[:, 2]  # Adjust the column index as necessary
-
-# Instagrapi client setup
-cl = Client()
-cl.delay_range = [45, 50]  # Set delay range for requests
-
-# Replace these with your actual IG username and password
-USERNAME = "USERNAME"
-PASSWORD = "PASSWORD"
-
-# Mailjet setup
-mailjet_api_key = 'MAILJET_API_KEY'
-mailjet_api_secret = 'MAILJET_SECRET_KEY'
-mailjet_client = MailjetClient(auth=(mailjet_api_key, mailjet_api_secret), version='v3.1')
-
-def login_user():
+def extract_prospects(file_name="Examplar Prospects List.csv"):
     """
-    Login to Instagram with username and password.
-    """
-    try:
-        cl.login(USERNAME, PASSWORD)
-        logger.info("Logged in successfully.")
-    except Exception as e:
-        logger.error(f"Login failed: {e}")
-        raise Exception("Login failed")
-
-login_user()
-
-def scrape_facebook_and_gmail(websites):
-    facebook_links = []
-    gmail_addresses = []
-
-    for url in websites:
-        try:
-            response = requests.get(url, timeout=10)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                links = soup.find_all('a', href=True)
-                for link in links:
-                    href = link['href']
-                    if "facebook.com" in href:
-                        facebook_links.append(href)
-                text = soup.get_text()
-                gmail_addresses.extend(re.findall(r"[a-zA-Z0-9_.+-]+@gmail.com", text))
-        except requests.RequestException as e:
-            logger.error(f"Error fetching {url}: {e}")
+    Reads a CSV file and extracts 'Prospect Name' (Column A) and 'Website' (Column C).
     
-    # Print all Facebook links
-    print(Panel.fit("\n".join(facebook_links), title="Facebook Links", border_style="bold blue", box=box.SQUARE))
-    # Print all Gmail addresses
-    print(Panel.fit("\n".join(gmail_addresses), title="Gmail Addresses", border_style="bold magenta", box=box.SQUARE))
+    Returns:
+        list of tuples: [(prospect_name, website), ...]
+    """
+    file_path = os.path.join(os.getcwd(), file_name)
 
-    # Email sending to the scraped Gmail addresses
-    for email in gmail_addresses:
-        send_email(email)
+    # Load the CSV
+    df = pd.read_csv(file_path)
 
-def send_email(recipient_email):
-    data = {
-      'Messages': [
-        {
-          "From": {
-            "Email": "wordsmithscripts@gmail.com",
-            "Name": "WordSmith Corp."
-          },
-          "To": [
-            {
-              "Email": recipient_email,
-              "Name": "Dear Valued Customer"
-            }
-          ],
-          "Subject": "Loved your last post",
-          "TextPart": """I just came across your latest post and loved it, but I have the hack to solve your low traffic problem without the normal hassle. I have been impressed with the quality of your services yet I notice you struggling with :
+    # Extract required columns
+    df_selected = df.iloc[:, [0, 2]]  # Adjust index if needed
+    df_selected.columns = ["Prospect Name", "Website"]  # Rename columns
 
-                        — Finding new clients for your business
-                        — Improving the quality of leads you get
-                        — Increasing your web traffic and profits
-                        
-                        I believe I can help you overcome these issues, and I am willing to do it for free to prove myself to you. If you are interested, you can reply “START” to this email and I will be in-touch with you shortly.
-                        
-                        I have attached some of my previous work below the email to give you a sense of quality of the designs you could expect from my side.
-                        
-                        Again, If you’re busy, I can understand.
-                        
-                        Rao, Chief Executive Officer
-                        Upkick Marketing Agency
-                        upkick.marketing [Instagram]
-                        wordsmithscript@gmail.com [Email]""",
-          "CustomID": "OutreachTestingRuns"
-        }
-      ]
-    }
-    result = mailjet_client.send.create(data=data)
-    if result.status_code == 200:
-        print(Panel.fit(f"Email successfully sent to {recipient_email}", border_style="bold green", box=box.SQUARE))
-    else:
-        print(Panel.fit(f"Failed to send email to {recipient_email}. Error: {result.json()}", border_style="bold red", box=box.SQUARE))
+    # Convert to a list of tuples
+    prospects_list = [
+        (str(row["Prospect Name"]), str(row["Website"]) if pd.notna(row["Website"]) else "N/A")
+        for _, row in df_selected.iterrows()
+    ]
 
-def send_instagram_message(websites):
-    messages_sent = 0
-    for url in websites:
-        if messages_sent >= 15:
-            break  # Stop sending messages after 15
-        found_instagram = False
-        try:
-            response = requests.get(url, timeout=10)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                links = soup.find_all('a', href=True)
-                for link in links:
-                    href = link['href']
-                    if "instagram.com" in href:
-                        username = extract_instagram_username(href)
-                        if username:
-                            found_instagram = True
-                            try:
-                                user_id = cl.user_id_from_username(username)
-                                message = f"Hey {username},\n\nImpressed by the range of services, especially as summer heats up the demand. We offer expert digital marketing with a twist: no payment until you see results. Let's chat."
-                                cl.direct_send(message, [user_id])
-                                cl.direct_send(message, user_id)
-                                messages_sent += 1
-                                break  # Move to next website after sending a message
-                            except UserNotFound:
-                                print(Panel.fit(f"Instagram user {username} not found. Skipping...", border_style="bold yellow", box=box.SQUARE))
-            else:
-                print(Panel.fit(f"Could not retrieve {url}", border_style="bold red", box=box.SQUARE))
-        except requests.RequestException as e:
-            print(Panel.fit(f"Error: {e}", border_style="bold red", box=box.SQUARE))
-        except LoginRequired:
-            # Try to re-login if not logged in
-            logger.error("Login required. Trying to re-login.")
-            login_user()
-            time.sleep(600)  # Wait for some time before retrying
-            continue  # Retry sending the message
-
-def extract_instagram_username(instagram_url):
-    match = re.search(r"instagram.com/([^/?#&]+)", instagram_url)
-    if match:
-        return match.group(1)
-    else:
-        return None
-
-# Implementation
-send_instagram_message(websites)
-scrape_facebook_and_gmail(websites)
+    return prospects_list  # Store it for later use
