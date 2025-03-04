@@ -1,0 +1,5 @@
+Coding main loop function :
+          [x] Process excel file for prospect names and emails
+          [x] Scan websites for social media links and email addresses
+          [] Use outreach message templates with personalised intro section
+          [] Send outreach messages and emails using APIs and modules
