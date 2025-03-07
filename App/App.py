@@ -4,6 +4,7 @@ import re
 from rich.table import Table
 from rich.console import Console
 from rich.traceback import install
+from rich.panel import Panel
 import pandas as pd
 
 # Enable rich traceback for debugging
@@ -59,7 +60,7 @@ def extract_social_links(url):
         print(f"Error with URL {url}: {e}")
         return None, None, None, None
 
-# Function to extract prospects and social media links
+# Function to extract prospects and display social media links
 def extract_prospects_with_links(file_name="Examplar Prospects List.csv"):
     df = pd.read_csv(file_name)
     df_selected = df.iloc[:, [0, 2]]  # Assuming Column A and C for 'Prospect Name' and 'Website'
@@ -87,5 +88,33 @@ def extract_prospects_with_links(file_name="Examplar Prospects List.csv"):
 
     console.print(table)
 
-# Call the function
-extract_prospects_with_links()
+# Function to generate outreach messages separately
+def generate_outreach_messages(file_name="Examplar Prospects List.csv"):
+    df = pd.read_csv(file_name)
+    df_selected = df.iloc[:, [0]]  # Extract only 'Prospect Name' column
+    df_selected.columns = ["Prospect Name"]
+
+    for _, row in df_selected.iterrows():
+        prospect_name = row["Prospect Name"]
+        message = f"""Hey [bold cyan]{prospect_name}[/bold cyan], just came across your latest post and loved it and I believe I have the hack to solving your low traffic problem without the normal hassle. I have been impressed with the quality of your services yet I notice you struggling with:
+
+— Finding new clients for your business  
+— Improving the quality of the leads you get  
+— Increasing your web traffic and profits  
+
+I believe I can help you overcome these issues, and I am willing to do it for free to prove myself to you. If you are interested, you can reply “START” to this email and I will be in touch with you shortly.  
+
+I have attached some of my previous work below the email to give you a sense of the quality of the designs you could expect from my side.  
+
+Again, If you’re busy, I can understand.  
+
+[b]Rao, Chief Executive Officer[/b]  
+Upkick Marketing Agency  
+[bold cyan]upkick.marketing[/bold cyan] [Instagram]  
+[bold yellow]wordsmithscript@gmail.com[/bold yellow] [Email]"""
+
+        console.print(Panel(message, title="Outreach Message", expand=False, border_style="bold green"))
+
+# Run the functions independently
+extract_prospects_with_links()  # Runs the scraping and displays social media links
+generate_outreach_messages()  # Runs separately and prints outreach messages
