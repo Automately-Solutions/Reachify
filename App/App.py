@@ -1,17 +1,22 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-from rich.table import Table
+import pandas as pd
 from rich.console import Console
 from rich.traceback import install
+from rich.table import Table
 from rich.panel import Panel
-import pandas as pd
+
+from Emailbot import send_email
 
 # Enable rich traceback for debugging
 install(show_locals=True)
 
 # Initialize the console
 console = Console()
+
+# Constant sender email (used for all emails)
+SENDER_EMAIL = "your_verified_email@example.com"
 
 # Function to extract social media links and emails
 def extract_social_links(url):
@@ -45,19 +50,19 @@ def extract_social_links(url):
         if gmail_search:
             gmail_address = gmail_search.group(0)
 
-        # Look for email addresses inside <a> tags with 'mailto:' links
+        # Prioritize mailto: links for more accurate email detection
         mailto_links = soup.find_all('a', href=True)
         for link in mailto_links:
             href = link['href']
             if href.startswith('mailto:'):
                 extracted_email = href.replace('mailto:', '').strip()
                 if extracted_email.endswith('@gmail.com'):
-                    gmail_address = extracted_email  # Prioritize mailto: links over regex
+                    gmail_address = extracted_email
 
         return instagram_link, facebook_link, gmail_address, linkedin_link
 
     except requests.exceptions.RequestException as e:
-        print(f"Error with URL {url}: {e}")
+        console.print(f"[bold red]Error with URL {url}:[/bold red] {e}")
         return None, None, None, None
 
 # Function to extract prospects and display social media links
@@ -80,23 +85,35 @@ def extract_prospects_with_links(file_name="Examplar Prospects List.csv"):
 
         instagram, facebook, gmail, linkedin = extract_social_links(website)
 
-        table.add_row(str(prospect_name), str(website), 
-                      str(instagram or "N/A"), 
-                      str(facebook or "N/A"), 
-                      str(gmail or "N/A"), 
-                      str(linkedin or "N/A"))
+        table.add_row(
+            str(prospect_name), str(website), 
+            str(instagram or "N/A"), 
+            str(facebook or "N/A"), 
+            str(gmail or "N/A"), 
+            str(linkedin or "N/A")
+        )
 
     console.print(table)
 
-# Function to generate outreach messages separately
-def generate_outreach_messages(file_name="Examplar Prospects List.csv"):
+# Function to generate outreach messages and send emails
+def generate_and_send_emails(file_name="Examplar Prospects List.csv"):
     df = pd.read_csv(file_name)
-    df_selected = df.iloc[:, [0]]  # Extract only 'Prospect Name' column
-    df_selected.columns = ["Prospect Name"]
+    df_selected = df.iloc[:, [0, 2]]  # Assuming columns 'Prospect Name' and 'Website'
+    df_selected.columns = ["Prospect Name", "Website"]
 
     for _, row in df_selected.iterrows():
         prospect_name = row["Prospect Name"]
-        message = f"""Hey [bold cyan]{prospect_name}[/bold cyan], just came across your latest post and loved it and I believe I have the hack to solving your low traffic problem without the normal hassle. I have been impressed with the quality of your services yet I notice you struggling with:
+        website = row["Website"]
+
+        # Extract contact info
+        _, _, gmail, _ = extract_social_links(website)
+
+        if not gmail:
+            console.print(f"[bold yellow]Skipping {prospect_name} (No valid Gmail found)[/bold yellow]")
+            continue
+
+        # Generate personalized outreach message
+        message = f"""Hey {prospect_name}, just came across your latest post and loved it and I believe I have the hack to solving your low traffic problem without the normal hassle. I have been impressed with the quality of your services yet I notice you struggling with:
 
 — Finding new clients for your business  
 — Improving the quality of the leads you get  
@@ -108,13 +125,22 @@ I have attached some of my previous work below the email to give you a sense of 
 
 Again, If you’re busy, I can understand.  
 
-[b]Rao, Chief Executive Officer[/b]  
+Rao, Chief Executive Officer  
 Upkick Marketing Agency  
-[bold cyan]upkick.marketing[/bold cyan] [Instagram]  
-[bold yellow]wordsmithscript@gmail.com[/bold yellow] [Email]"""
+upkick.marketing [Instagram]  
+wordsmithscript@gmail.com [Email]
+        """
 
-        console.print(Panel(message, title="Outreach Message", expand=False, border_style="bold green"))
+        # Display the message in a panel
+        console.print(Panel(message, title=f"Outreach Message for {prospect_name}", expand=False, border_style="bold green"))
 
-# Run the functions independently
-extract_prospects_with_links()  # Runs the scraping and displays social media links
-generate_outreach_messages()  # Runs separately and prints outreach messages
+        # Send the email
+        try:
+            send_email(message, SENDER_EMAIL, gmail)
+            console.print(f"[bold green]Email sent successfully to {prospect_name} ({gmail})[/bold green]")
+        except Exception as e:
+            console.print(f"[bold red]Failed to send email to {prospect_name} ({gmail}): {e}[/bold red]")
+
+# Run the functions
+extract_prospects_with_links()      # Display social media and Gmail addresses
+generate_and_send_emails()          # Generate messages and send emails
