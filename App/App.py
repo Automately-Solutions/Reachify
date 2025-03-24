@@ -16,7 +16,7 @@ install(show_locals=True)
 console = Console()
 
 # Constant sender email (used for all emails)
-SENDER_EMAIL = "your_verified_email@example.com"
+SENDER_EMAIL = "wordsmithscript@gmail.com"
 
 # Function to extract social media links and emails
 def extract_social_links(url):
@@ -115,21 +115,21 @@ def generate_and_send_emails(file_name="Examplar Prospects List.csv"):
         # Generate personalized outreach message
         message = f"""Hey {prospect_name}, just came across your latest post and loved it and I believe I have the hack to solving your low traffic problem without the normal hassle. I have been impressed with the quality of your services yet I notice you struggling with:
 
-— Finding new clients for your business  
-— Improving the quality of the leads you get  
-— Increasing your web traffic and profits  
+        — Finding new clients for your business  
+        — Improving the quality of the leads you get  
+        — Increasing your web traffic and profits  
 
-I believe I can help you overcome these issues, and I am willing to do it for free to prove myself to you. If you are interested, you can reply “START” to this email and I will be in touch with you shortly.  
+        I believe I can help you overcome these issues, and I am willing to do it for free to prove myself to you. If you are interested, you can reply “START” to this email and I will be in touch with you shortly.  
 
-I have attached some of my previous work below the email to give you a sense of the quality of the designs you could expect from my side.  
+        I have attached some of my previous work below the email to give you a sense of the quality of the designs you could expect from my side.  
 
-Again, If you’re busy, I can understand.  
+        Again, If you’re busy, I can understand.  
 
-Rao, Chief Executive Officer  
-Upkick Marketing Agency  
-upkick.marketing [Instagram]  
-wordsmithscript@gmail.com [Email]
-        """
+        Rao, Chief Executive Officer  
+        Upkick Marketing Agency  
+        upkick.marketing [Instagram]  
+        wordsmithscript@gmail.com [Email]
+                """
 
         # Display the message in a panel
         console.print(Panel(message, title=f"Outreach Message for {prospect_name}", expand=False, border_style="bold green"))
@@ -142,5 +142,5 @@ wordsmithscript@gmail.com [Email]
             console.print(f"[bold red]Failed to send email to {prospect_name} ({gmail}): {e}[/bold red]")
 
 # Run the functions
-extract_prospects_with_links()      # Display social media and Gmail addresses
+#extract_prospects_with_links()      # Display social media and Gmail addresses
 generate_and_send_emails()          # Generate messages and send emails
