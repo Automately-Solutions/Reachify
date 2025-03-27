@@ -45,19 +45,17 @@ def extract_social_links(url):
         if linkedin_search:
             linkedin_link = linkedin_search.group(0)
 
-        # Find visible Gmail addresses in the text
-        gmail_search = re.search(r'([a-zA-Z0-9._%+-]+@gmail\.com)', response.text)
-        if gmail_search:
-            gmail_address = gmail_search.group(0)
-
-        # Prioritize mailto: links for more accurate email detection
         mailto_links = soup.find_all('a', href=True)
         for link in mailto_links:
             href = link['href']
             if href.startswith('mailto:'):
-                extracted_email = href.replace('mailto:', '').strip()
-                if extracted_email.endswith('@gmail.com'):
-                    gmail_address = extracted_email
+                gmail_address = href.replace('mailto:', '').strip()
+                break
+            
+        if not gmail_address:
+            email_search = re.search(r'([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', response.text)
+            if email_search:
+                gmail_address = email_search.group(0)
 
         return instagram_link, facebook_link, gmail_address, linkedin_link
 
