@@ -2,4 +2,8 @@ Coding main loop function :
           [x] Process excel file for prospect names and emails
           [x] Scan websites for social media links and email addresses
           [x] Use outreach message templates with personalised intro section
-          [] Send outreach messages and emails using APIs and modules
+          [x] Send outreach emails using mailjet API integrations
+                    [-] Output successful emails sent list after run
+          [-] Send outreach messages using APIs for Instagram/Facebook DMs
+                    [-] Output successful contacts sent list after run
+          

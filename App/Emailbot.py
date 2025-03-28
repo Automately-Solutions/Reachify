@@ -2,8 +2,8 @@ import os
 from mailjet_rest import Client
 
 # Mailjet API Constants (replace with your actual API keys)
-MJ_APIKEY_PUBLIC = "your_mailjet_public_key"
-MJ_APIKEY_PRIVATE = "your_mailjet_private_key"
+MJ_APIKEY_PUBLIC = "372eefae66841cfce3f97b7ddcc5473a"
+MJ_APIKEY_PRIVATE = "53058c9f72d2a28f366dc87bb6a81348"
 
 # Initialize the Mailjet client
 mailjet = Client(auth=(MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE), version='v3.1')
