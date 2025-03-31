@@ -99,15 +99,18 @@ def generate_and_send_emails(file_name="Examplar Prospects List.csv"):
     df_selected = df.iloc[:, [0, 2]]  # Assuming columns 'Prospect Name' and 'Website'
     df_selected.columns = ["Prospect Name", "Website"]
 
+    sent_emails = []  # List of successful email addresses
+    failed_emails = []  # List of failed email addresses
+
     for _, row in df_selected.iterrows():
         prospect_name = row["Prospect Name"]
         website = row["Website"]
 
         # Extract contact info
-        _, _, gmail, _ = extract_social_links(website)
+        _, _, email, _ = extract_social_links(website)
 
-        if not gmail:
-            console.print(f"[bold yellow]Skipping {prospect_name} (No valid Gmail found)[/bold yellow]")
+        if not email:
+            console.print(f"[bold yellow]Skipping {prospect_name} (No valid email found)[/bold yellow]")
             continue
 
         # Generate personalized outreach message
@@ -127,17 +130,29 @@ def generate_and_send_emails(file_name="Examplar Prospects List.csv"):
         Upkick Marketing Agency  
         upkick.marketing [Instagram]  
         wordsmithscript@gmail.com [Email]
-                """
+        """
 
         # Display the message in a panel
         console.print(Panel(message, title=f"Outreach Message for {prospect_name}", expand=False, border_style="bold green"))
 
         # Send the email
         try:
-            send_email(message, SENDER_EMAIL, gmail)
-            console.print(f"[bold green]Email sent successfully to {prospect_name} ({gmail})[/bold green]")
+            send_email(message, SENDER_EMAIL, email)
+            console.print(f"[bold green]Email sent successfully to {prospect_name} ({email})[/bold green]")
+            sent_emails.append(email)
         except Exception as e:
-            console.print(f"[bold red]Failed to send email to {prospect_name} ({gmail}): {e}[/bold red]")
+            console.print(f"[bold red]Failed to send email to {prospect_name} ({email}): {e}[/bold red]")
+            failed_emails.append(email)
+
+    # Print summary
+    console.print(f"\n[bold cyan]Summary:[/bold cyan]")
+    console.print(f"✅ Successfully sent {len(sent_emails)} emails:")
+    for email in sent_emails:
+        console.print(f"   - {email}")
+
+    console.print(f"❌ Failed to send {len(failed_emails)} emails:")
+    for email in failed_emails:
+        console.print(f"   - {email}")
 
 # Run the functions
 #extract_prospects_with_links()      # Display social media and Gmail addresses
