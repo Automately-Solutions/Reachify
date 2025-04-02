@@ -53,9 +53,14 @@ def extract_social_links(url):
                 break
             
         if not gmail_address:
-            email_search = re.search(r'([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', response.text)
+            email_search = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', response.text)
             if email_search:
-                gmail_address = email_search.group(0)
+                raw_email = email_search.group(0)
+                # Clean email from any leading/trailing non-email characters
+                cleaned_email = re.sub(r'[^a-zA-Z0-9._%+-@]', '', raw_email)
+                if re.fullmatch(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', cleaned_email):
+                    gmail_address = cleaned_email
+
 
         return instagram_link, facebook_link, gmail_address, linkedin_link
 
