@@ -3,7 +3,9 @@ Coding main loop function :
           [x] Scan websites for social media links and email addresses
           [x] Use outreach message templates with personalised intro section
           [x] Send outreach emails using mailjet API integrations
-                    [] Output successful emails sent list after run
+                    [x] Output successful emails sent list after run
+                    [] Select a suitable email template to use as per client
           [-] Send outreach messages using APIs for Instagram/Facebook DMs
+                    [-] Test Web scrapping social media account links
                     [-] Output successful contacts sent list after run
           

@@ -8,6 +8,7 @@ from rich.table import Table
 from rich.panel import Panel
 
 from Emailbot import send_email
+from Instagrambot import send_instagram_dm
 
 # Enable rich traceback for debugging
 install(show_locals=True)
@@ -76,11 +77,10 @@ def extract_prospects_with_links(file_name="Examplar Prospects List.csv"):
 
     table = Table(title="Prospect Social Media and Website Info", show_lines=True)
     table.add_column("Prospect Name", style="bold cyan")
-    table.add_column("Website", style="bold magenta")
-    table.add_column("Instagram", style="bold green")
+    table.add_column("Instagram", style="bold magenta")
     table.add_column("Facebook", style="bold blue")
-    table.add_column("Gmail", style="bold yellow")
-    table.add_column("LinkedIn", style="bold red")
+    table.add_column("Gmail", style="bold green")
+    table.add_column("LinkedIn", style="bold blue")
 
     for _, row in df_selected.iterrows():
         prospect_name = row["Prospect Name"]
@@ -89,7 +89,7 @@ def extract_prospects_with_links(file_name="Examplar Prospects List.csv"):
         instagram, facebook, gmail, linkedin = extract_social_links(website)
 
         table.add_row(
-            str(prospect_name), str(website), 
+            str(prospect_name),
             str(instagram or "N/A"), 
             str(facebook or "N/A"), 
             str(gmail or "N/A"), 
@@ -159,6 +159,45 @@ def generate_and_send_emails(file_name="Examplar Prospects List.csv"):
     for email in failed_emails:
         console.print(f"   - {email}")
 
-# Run the functions
-#extract_prospects_with_links()      # Display social media and Gmail addresses
-generate_and_send_emails()          # Generate messages and send emails
+def generate_and_send_instagram_dms(file_name="Examplar Prospects List.csv"):
+    """Extracts Instagram links from websites and sends DMs using send_instagram_dm()."""
+    df = pd.read_csv(file_name)
+    df_selected = df.iloc[:, [0, 2]]  # Assuming columns 'Prospect Name' and 'Website'
+    df_selected.columns = ["Prospect Name", "Website"]
+
+    sent_dms = []  # List of successful DMs
+    failed_dms = []  # List of failed DMs
+
+    for _, row in df_selected.iterrows():
+        prospect_name = row["Prospect Name"]
+        website = row["Website"]
+
+        # Extract Instagram link
+        instagram_link, _, _, _ = extract_social_links(website)
+
+        if not instagram_link:
+            console.print(f"[bold yellow]Skipping {prospect_name} (No Instagram found)[/bold yellow]")
+            continue
+
+        # Send the DM
+        success = send_instagram_dm(instagram_link, prospect_name)
+        if success:
+            sent_dms.append(prospect_name)
+        else:
+            failed_dms.append(prospect_name)
+
+    # Print summary
+    console.print(f"\n[bold cyan]Summary:[/bold cyan]")
+    console.print(f"✅ Successfully sent {len(sent_dms)} DMs:")
+    for name in sent_dms:
+        console.print(f"   - {name}")
+
+    console.print(f"❌ Failed to send {len(failed_dms)} DMs:")
+    for name in failed_dms:
+        console.print(f"   - {name}")
+
+
+
+# extract_prospects_with_links()
+# generate_and_send_emails()
+generate_and_send_instagram_dms()
