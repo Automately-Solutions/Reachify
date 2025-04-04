@@ -4,8 +4,9 @@ Coding main loop function :
           [x] Use outreach message templates with personalised intro section
           [x] Send outreach emails using mailjet API integrations
                     [x] Output successful emails sent list after run
-                    [] Select a suitable email template to use as per client
-          [-] Send outreach messages using APIs for Instagram/Facebook DMs
-                    [-] Test Web scrapping social media account links
-                    [-] Output successful contacts sent list after run
+                    [-] Select a suitable email template as per client
+          [x] Send outreach messages using APIs for Instagram/Facebook DMs
+                    [x] Test Web scrapping social media account links
+                    [x] Output successful contacts sent list after run
+                    [-] Select suitable messaging template as per client
           
