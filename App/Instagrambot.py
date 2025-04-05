@@ -30,3 +30,28 @@ def extract_instagram_username(instagram_url):
     """Extracts the username from an Instagram URL."""
     match = re.search(r"instagram.com/([^/?#&]+)", instagram_url)
     return match.group(1) if match else None
+
+def get_instagram_post_stats(post_url_or_code):
+
+    try:
+        # Determine if input is URL or shortcode
+        if "instagram.com/p/" in post_url_or_code:
+            media_pk = cl.media_pk_from_url(post_url_or_code)
+        else:
+            media_pk = cl.media_pk_from_code(post_url_or_code)
+
+        media_info = cl.media_info(media_pk)
+        like_count = media_info.like_count
+        view_count = media_info.view_count
+
+        return {
+            "like_count": like_count,
+            "view_count": view_count
+        }
+
+    except Exception as e:
+        print(f"Error fetching stats: {e}")
+        return None
+
+stats = get_instagram_post_stats("https://www.instagram.com/p/DIEw5uLIKeD/")
+print(stats)
