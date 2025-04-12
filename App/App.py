@@ -1,11 +1,15 @@
+import os
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 import re
 import pandas as pd
 from rich.console import Console
 from rich.traceback import install
 from rich.table import Table
 from rich.panel import Panel
+
+from mailjet_rest import Client
 
 from Emailbot import send_email
 from Instagrambot import send_instagram_dm
@@ -196,7 +200,36 @@ def generate_and_send_instagram_dms(file_name="Examplar Prospects List.csv"):
     for name in failed_dms:
         console.print(f"   - {name}")
 
+def print_today_campaign_stats():
+    api_key = os.environ['372eefae66841cfce3f97b7ddcc5473a']
+    api_secret = os.environ['b972a6b285104de6272c4fa6a923c38f']
+    mailjet = Client(auth=(api_key, api_secret))
+
+    # Format today's date in YYYY-MM-DD format
+    today = datetime.utcnow().strftime('%Y-%m-%d')
+
+    filters = {
+        'CounterResolution': 'Day',
+        'FromTS': today,
+        'ToTS': today
+    }
+
+    result = mailjet.statcounters.get(filters=filters)
+
+    if result.status_code == 200:
+        stats = result.json().get('Data', [])
+        if stats:
+            print(f"📊 Stats for emails today : {today}")
+            for stat in stats:
+                print(f"  - Event: {stat.get('Event')}")
+                print(f"    Count: {stat.get('Count')}")
+        else:
+            print(f"No stats available for today : {today}")
+    else:
+        print(f"❌ Failed to fetch stats: {result.status_code}")
+        print(result.json())
 
 # extract_prospects_with_links()
 # generate_and_send_emails()
-generate_and_send_instagram_dms()
+# generate_and_send_instagram_dms()
+print_today_campaign_stats()
