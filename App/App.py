@@ -201,8 +201,8 @@ def generate_and_send_instagram_dms(file_name="Examplar Prospects List.csv"):
         console.print(f"   - {name}")
 
 def print_today_campaign_stats():
-    api_key = os.environ['372eefae66841cfce3f97b7ddcc5473a']
-    api_secret = os.environ['b972a6b285104de6272c4fa6a923c38f']
+    api_key = os.environ['MJ_APIKEY_PUBLIC']
+    api_secret = os.environ['MJ_APIKEY_PRIVATE']
     mailjet = Client(auth=(api_key, api_secret))
 
     # Format today's date in YYYY-MM-DD format
