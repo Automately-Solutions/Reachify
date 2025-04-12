@@ -197,7 +197,6 @@ def generate_and_send_instagram_dms(file_name="Examplar Prospects List.csv"):
         console.print(f"   - {name}")
 
 
-
 # extract_prospects_with_links()
 # generate_and_send_emails()
 generate_and_send_instagram_dms()
