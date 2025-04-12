@@ -8,5 +8,11 @@ Coding main loop function :
           [x] Send outreach messages using APIs for Instagram/Facebook DMs
                     [x] Test Web scrapping social media account links
                     [x] Output successful contacts sent list after run
+                    [x] Analyse Prospect profiles on Instagram
                     [-] Select suitable messaging template as per client
+          
+Coding the other side features :
+          [-] Add Profile and Website analysis
+          [-] API Email data analysis and data reports
+          [-] Add a small personalised segment for each industry
           
