@@ -4,15 +4,19 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import re
 import pandas as pd
+
 from rich.console import Console
 from rich.traceback import install
 from rich.table import Table
 from rich.panel import Panel
 
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
+
 from mailjet_rest import Client
 
 from Emailbot import send_email
-from Instagrambot import send_instagram_dm
+# from Instagrambot import send_instagram_dm
 
 # Enable rich traceback for debugging
 install(show_locals=True)
@@ -74,7 +78,7 @@ def extract_social_links(url):
         return None, None, None, None
 
 # Function to extract prospects and display social media links
-def extract_prospects_with_links(file_name="Examplar Prospects List.csv"):
+def extract_prospects_with_links(file_name="Examplar Prospects List.xlsx"):
     df = pd.read_csv(file_name)
     df_selected = df.iloc[:, [0, 2]]  # Assuming Column A and C for 'Prospect Name' and 'Website'
     df_selected.columns = ["Prospect Name", "Website"]
@@ -103,8 +107,8 @@ def extract_prospects_with_links(file_name="Examplar Prospects List.csv"):
     console.print(table)
 
 # Function to generate outreach messages and send emails
-def generate_and_send_emails(file_name="Examplar Prospects List.csv"):
-    df = pd.read_csv(file_name)
+def generate_and_send_emails(file_name="Examplar Prospects List.xlsx"):
+    df = pd.read_excel("Examplar Prospects List.xlsx")
     df_selected = df.iloc[:, [0, 2]]  # Assuming columns 'Prospect Name' and 'Website'
     df_selected.columns = ["Prospect Name", "Website"]
 
@@ -153,6 +157,18 @@ def generate_and_send_emails(file_name="Examplar Prospects List.csv"):
             console.print(f"[bold red]Failed to send email to {prospect_name} ({email}): {e}[/bold red]")
             failed_emails.append(email)
 
+    wb = load_workbook(file_name)
+    ws = wb.active
+    green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+
+    for idx, row in enumerate(ws.iter_rows(min_row=2, max_row=ws.max_row), start=2):
+        if row[2].value in sent_emails:  # Assuming column 3 has the email
+            for cell in ws[idx]:
+                cell.fill = green_fill
+
+
+    wb.save(file_name)
+
     # Print summary
     console.print(f"\n[bold cyan]Summary:[/bold cyan]")
     console.print(f"✅ Successfully sent {len(sent_emails)} emails:")
@@ -163,9 +179,9 @@ def generate_and_send_emails(file_name="Examplar Prospects List.csv"):
     for email in failed_emails:
         console.print(f"   - {email}")
 
-def generate_and_send_instagram_dms(file_name="Examplar Prospects List.csv"):
+def generate_and_send_instagram_dms(file_name="Examplar Prospects List.xlsx"):
     """Extracts Instagram links from websites and sends DMs using send_instagram_dm()."""
-    df = pd.read_csv(file_name)
+    df = pd.read_excel(file_name)
     df_selected = df.iloc[:, [0, 2]]  # Assuming columns 'Prospect Name' and 'Website'
     df_selected.columns = ["Prospect Name", "Website"]
 
@@ -189,6 +205,19 @@ def generate_and_send_instagram_dms(file_name="Examplar Prospects List.csv"):
             sent_dms.append(prospect_name)
         else:
             failed_dms.append(prospect_name)
+
+    # Highlight successful DM rows in green
+    wb = load_workbook(file_name)
+    ws = wb.active
+    green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+
+    for idx, row in enumerate(ws.iter_rows(min_row=2, max_row=ws.max_row), start=2):
+        name_cell = row[0].value  # Assumes name is in the first column
+        if name_cell in sent_dms:
+            for cell in row:
+                cell.fill = green_fill
+
+    wb.save(file_name)
 
     # Print summary
     console.print(f"\n[bold cyan]Summary:[/bold cyan]")
@@ -230,6 +259,6 @@ def print_today_campaign_stats():
         print(result.json())
 
 # extract_prospects_with_links()
-# generate_and_send_emails()
+generate_and_send_emails()
 # generate_and_send_instagram_dms()
 print_today_campaign_stats()
