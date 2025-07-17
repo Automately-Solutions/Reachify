@@ -19,8 +19,6 @@
 
 - **Automated Email Campaigns**: Send personalized email sequences with our easy-to-use campaign builder.
 - **Lead Scoring and Management**: Prioritize your outreach with AI-driven lead scoring.
-- **Performance Analytics**: Track your outreach efforts with detailed analytics and reporting.
-- **Customizable Templates**: Use our template library to start your campaigns or create your own from scratch.
 
 # Scope for further development
 
